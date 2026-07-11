@@ -18,7 +18,7 @@ const GET_CAPABILITIES = gql`
         businessValue
         status
       }
-      totalCount
+      paginationInfo { total }
     }
   }
 `

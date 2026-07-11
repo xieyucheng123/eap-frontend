@@ -12,12 +12,11 @@ import { Badge } from '@/components/ui/badge'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
 import { Link } from 'react-router-dom'
-import { Plus, ChevronLeft, ChevronRight } from 'lucide-react'
-import { useState } from 'react'
+import { Plus } from 'lucide-react'
 
 const GET_VALUE_STREAMS = gql`
-  query GetValueStreams($page: Int, $size: Int) {
-    valueStreams(page: { page: $page, size: $size }) {
+  query GetValueStreams {
+    valueStreams {
       nodes {
         id
         name
@@ -25,18 +24,15 @@ const GET_VALUE_STREAMS = gql`
         businessVersion
         status
       }
-      totalCount
+      paginationInfo {
+        total
+      }
     }
   }
 `
 
 export default function ValueStreams() {
-  const [page, setPage] = useState(0)
-  const pageSize = 10
-
-  const { data, loading, error } = useQuery(GET_VALUE_STREAMS, {
-    variables: { page, size: pageSize },
-  })
+  const { data, loading, error } = useQuery(GET_VALUE_STREAMS)
 
   const statusColor = (status: string) => {
     switch (status) {
@@ -98,29 +94,8 @@ export default function ValueStreams() {
               {/* Pagination */}
               <div className="flex items-center justify-between mt-4">
                 <p className="text-sm text-muted-foreground">
-                  共 {data.valueStreams.totalCount} 条
+                  共 {data.valueStreams.paginationInfo.total} 条
                 </p>
-                <div className="flex gap-2">
-                  <Button
-                    variant="outline"
-                    size="sm"
-                    disabled={page === 0}
-                    onClick={() => setPage(p => Math.max(0, p - 1))}
-                  >
-                    <ChevronLeft className="h-4 w-4" />
-                  </Button>
-                  <span className="flex items-center px-3 text-sm">
-                    {page + 1} / {Math.ceil(data.valueStreams.totalCount / pageSize) || 1}
-                  </span>
-                  <Button
-                    variant="outline"
-                    size="sm"
-                    disabled={(page + 1) * pageSize >= data.valueStreams.totalCount}
-                    onClick={() => setPage(p => p + 1)}
-                  >
-                    <ChevronRight className="h-4 w-4" />
-                  </Button>
-                </div>
               </div>
             </>
           )}

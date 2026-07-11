@@ -8,7 +8,7 @@ import { ArrowLeft } from 'lucide-react'
 
 const GET_VALUE_STREAM_DETAIL = gql`
   query GetValueStreamDetail($id: String!) {
-    valueStreams(filter: { id: { eq: $id } }) {
+    valueStreams(filters: { id: { eq: $id } }) {
       nodes {
         id
         name

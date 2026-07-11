@@ -18,7 +18,7 @@ const GET_PROCESSES = gql`
         costPerTransaction
         status
       }
-      totalCount
+      paginationInfo { total }
     }
   }
 `
