@@ -1,6 +1,6 @@
 import { useQuery, useMutation } from '@apollo/client/react'
 import { gql } from '@apollo/client'
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from '@/components/ui/dialog'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
@@ -119,17 +119,17 @@ export function CreateVersionDialog({ open, onOpenChange, currentItem }: {
     }
   `)
 
-  useState(() => {
-    if (currentItem) {
-      // Suggest next version: v1.0 -> v2.0
+  useEffect(() => {
+    if (open && currentItem) {
       const match = currentItem.businessVersion.match(/v(\d+)\.(\d+)/)
       if (match) {
         setNewVersion(`v${parseInt(match[1]) + 1}.0`)
       } else {
         setNewVersion('v2.0')
       }
+      setError(null)
     }
-  })
+  }, [open, currentItem])
 
   async function handleCreateVersion() {
     if (!currentItem) return
