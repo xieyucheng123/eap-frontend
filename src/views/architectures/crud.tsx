@@ -33,7 +33,7 @@ const DELETE_VALUE_STREAM = gql`
 const GET_VALUE_STREAMS = gql`
   query GetValueStreamsForCrud {
     valueStreams {
-      nodes { id name description businessVersion status importance }
+      nodes { id name description businessVersion status importance logicalId }
       paginationInfo { total }
     }
   }
@@ -46,6 +46,7 @@ interface ValueStream {
   businessVersion: string
   status: string
   importance: string
+  logicalId: string
 }
 
 function nowRFC3339() {
@@ -105,10 +106,12 @@ export function ValueStreamCrudDialog({ open, onOpenChange, editing }: {
         })
       } else {
         const now = nowRFC3339()
+        const newId = newUUID()
         await createMut({
           variables: {
             data: {
-              id: newUUID(),
+              id: newId,
+              logicalId: newId,
               name, description,
               businessVersion: version,
               status, importance,
