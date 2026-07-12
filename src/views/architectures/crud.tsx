@@ -12,21 +12,26 @@ import { Plus, Pencil, Trash2, Loader2 } from 'lucide-react'
 // Value Stream CRUD
 // ============================================================================
 
+// Domain-driven custom mutations (replace seaography auto-CRUD)
 const CREATE_VALUE_STREAM = gql`
-  mutation CreateValueStream($data: ValueStreamsInsertInput!) {
-    valueStreamsCreateOne(data: $data) { id name }
+  mutation ValueStreamCreate($name: String!, $description: String!, $businessVersion: String!, $importance: String!) {
+    valueStreamCreate(name: $name, description: $description, businessVersion: $businessVersion, importance: $importance) {
+      id name description businessVersion status importance logicalId
+    }
   }
 `
 
 const UPDATE_VALUE_STREAM = gql`
-  mutation UpdateValueStream($data: ValueStreamsUpdateInput!, $filter: ValueStreamsFilterInput!) {
-    valueStreamsUpdate(data: $data, filter: $filter) { id name }
+  mutation ValueStreamUpdate($id: String!, $name: String, $description: String, $importance: String) {
+    valueStreamUpdate(id: $id, name: $name, description: $description, importance: $importance) {
+      id name description businessVersion status importance logicalId
+    }
   }
 `
 
-const DELETE_VALUE_STREAM = gql`
-  mutation DeleteValueStream($filter: ValueStreamsFilterInput!) {
-    valueStreamsDelete(filter: $filter)
+const ARCHIVE_VALUE_STREAM = gql`
+  mutation ValueStreamArchive($id: String!) {
+    valueStreamArchive(id: $id)
   }
 `
 
@@ -47,14 +52,6 @@ interface ValueStream {
   status: string
   importance: string
   logicalId: string
-}
-
-function nowRFC3339() {
-  return new Date().toISOString()
-}
-
-function newUUID() {
-  return crypto.randomUUID()
 }
 
 export function ValueStreamCrudDialog({ open, onOpenChange, editing }: {
@@ -99,25 +96,20 @@ export function ValueStreamCrudDialog({ open, onOpenChange, editing }: {
       if (editing) {
         await updateMut({
           variables: {
-            data: { name, description, businessVersion: version, status, importance },
-            filter: { id: { eq: editing.id } },
+            id: editing.id,
+            name,
+            description,
+            importance,
           },
           refetchQueries: [{ query: GET_VALUE_STREAMS }],
         })
       } else {
-        const now = nowRFC3339()
-        const newId = newUUID()
         await createMut({
           variables: {
-            data: {
-              id: newId,
-              logicalId: newId,
-              name, description,
-              businessVersion: version,
-              status, importance,
-              stakeholders: [], performanceMetrics: {},
-              createdAt: now, updatedAt: now,
-            },
+            name,
+            description,
+            businessVersion: version,
+            importance,
           },
           refetchQueries: [{ query: GET_VALUE_STREAMS }],
         })
@@ -183,20 +175,20 @@ export function ValueStreamDeleteDialog({ item, onConfirm }: {
   item: ValueStream | null
   onConfirm: () => void
 }) {
-  const [deleteMut] = useMutation(DELETE_VALUE_STREAM)
+  const [archiveMut] = useMutation(ARCHIVE_VALUE_STREAM)
   const [loading, setLoading] = useState(false)
 
   async function handleDelete() {
     if (!item) return
     setLoading(true)
     try {
-      await deleteMut({
-        variables: { filter: { id: { eq: item.id } } },
+      await archiveMut({
+        variables: { id: item.id },
         refetchQueries: [{ query: GET_VALUE_STREAMS }],
       })
       onConfirm()
     } catch (err) {
-      console.error('Delete failed:', err)
+      console.error('Archive failed:', err)
     } finally {
       setLoading(false)
     }
@@ -206,15 +198,15 @@ export function ValueStreamDeleteDialog({ item, onConfirm }: {
     <Dialog open={!!item} onOpenChange={() => onConfirm()}>
       <DialogContent>
         <DialogHeader>
-          <DialogTitle>确认删除</DialogTitle>
+          <DialogTitle>确认归档</DialogTitle>
         </DialogHeader>
         <p className="py-4 text-sm text-muted-foreground">
-          确定要删除价值流「{item?.name}」吗？此操作不可撤销。
+          确定要归档价值流「{item?.name}」吗？归档后不可修改，但可通过版本控制创建新版本。
         </p>
         <DialogFooter>
           <Button variant="outline" onClick={onConfirm}>取消</Button>
           <Button variant="destructive" onClick={handleDelete} disabled={loading}>
-            {loading ? <Loader2 className="h-4 w-4 animate-spin" /> : '删除'}
+            {loading ? <Loader2 className="h-4 w-4 animate-spin" /> : '归档'}
           </Button>
         </DialogFooter>
       </DialogContent>

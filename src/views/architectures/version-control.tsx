@@ -22,11 +22,16 @@ const GET_VALUE_STREAM_VERSIONS = gql`
 `
 
 const ARCHIVE_VALUE_STREAM = gql`
-  mutation ArchiveValueStream($id: String!) {
-    valueStreamsUpdate(
-      data: { status: "archived" }
-      filter: { id: { eq: $id } }
-    ) { id status }
+  mutation ValueStreamArchive($id: String!) {
+    valueStreamArchive(id: $id)
+  }
+`
+
+const CREATE_VERSION = gql`
+  mutation ValueStreamCreateVersion($currentId: String!, $newVersion: String!, $newName: String, $newDescription: String) {
+    valueStreamCreateVersion(currentId: $currentId, newVersion: $newVersion, newName: $newName, newDescription: $newDescription) {
+      id name description businessVersion status importance logicalId
+    }
   }
 `
 
@@ -112,12 +117,7 @@ export function CreateVersionDialog({ open, onOpenChange, currentItem }: {
   const [newVersion, setNewVersion] = useState('')
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState<string | null>(null)
-  const [archiveMut] = useMutation(ARCHIVE_VALUE_STREAM)
-  const [createMut] = useMutation(gql`
-    mutation CreateNewVersion($data: ValueStreamsInsertInput!) {
-      valueStreamsCreateOne(data: $data) { id name businessVersion }
-    }
-  `)
+  const [createVersionMut] = useMutation(CREATE_VERSION)
 
   useEffect(() => {
     if (open && currentItem) {
@@ -136,28 +136,13 @@ export function CreateVersionDialog({ open, onOpenChange, currentItem }: {
     setLoading(true)
     setError(null)
     try {
-      const now = new Date().toISOString()
-      const newId = crypto.randomUUID()
-
-      // Step 1: Archive current version
-      await archiveMut({ variables: { id: currentItem.id } })
-
-      // Step 2: Create new version with same logicalId
-      await createMut({
+      // Single atomic mutation: archives current + creates new version
+      await createVersionMut({
         variables: {
-          data: {
-            id: newId,
-            logicalId: currentItem.logicalId,
-            name: currentItem.name,
-            description: currentItem.description,
-            businessVersion: newVersion,
-            status: 'active',
-            importance: currentItem.importance,
-            stakeholders: [],
-            performanceMetrics: {},
-            createdAt: now,
-            updatedAt: now,
-          },
+          currentId: currentItem.id,
+          newVersion,
+          newName: currentItem.name,
+          newDescription: currentItem.description,
         },
         refetchQueries: [{ query: GET_VALUE_STREAMS }],
       })
