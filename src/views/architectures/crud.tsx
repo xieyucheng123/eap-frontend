@@ -63,7 +63,7 @@ export function ValueStreamCrudDialog({ open, onOpenChange, editing }: {
   const [description, setDescription] = useState('')
   const [version, setVersion] = useState('v1.0')
   const [status, setStatus] = useState('active')
-  const [importance, setImportance] = useState('high')
+  const [importance, setImportance] = useState('High')
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState<string | null>(null)
 
@@ -78,13 +78,13 @@ export function ValueStreamCrudDialog({ open, onOpenChange, editing }: {
         setDescription(editing.description)
         setVersion(editing.businessVersion)
         setStatus(editing.status)
-        setImportance(editing.importance)
+        setImportance(editing.importance.charAt(0).toUpperCase() + editing.importance.slice(1))
       } else {
         setName('')
         setDescription('')
         setVersion('v1.0')
         setStatus('active')
-        setImportance('high')
+        setImportance('High')
       }
     }
   }, [open, editing])
@@ -154,9 +154,10 @@ export function ValueStreamCrudDialog({ open, onOpenChange, editing }: {
           <div className="space-y-2">
             <Label>重要性</Label>
             <select className="w-full rounded-md border bg-background px-3 py-2 text-sm" value={importance} onChange={e => setImportance(e.target.value)}>
-              <option value="high">high</option>
-              <option value="medium">medium</option>
-              <option value="low">low</option>
+              <option value="Critical">Critical</option>
+              <option value="High">High</option>
+              <option value="Medium">Medium</option>
+              <option value="Low">Low</option>
             </select>
           </div>
         </div>
